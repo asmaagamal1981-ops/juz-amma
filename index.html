@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تفسير جزء عم | تدبّر وعمل</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Cairo:wght@300;400;600;700;900&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <div class="brand">
+      <div class="logo">۝</div>
+      <div>
+        <h1>تَدَبُّر <span>جزء عمَّ</span></h1>
+        <p>وفق منهج كتاب «القرآن تدبُّر وعمل»</p>
+      </div>
+    </div>
+    <nav>
+      <a href="#surahs">السور</a>
+      <a href="#manhaj">المنهجية</a>
+      <a href="#khatma">ختمة التدبر</a>
+      <a href="#quiz">اختبر نفسك</a>
+      <a href="#about">عن الكتاب</a>
+      <button id="themeBtn" title="الوضع الليلي">🌙</button>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="pattern"></div>
+  <div class="container hero-grid">
+    <div class="hero-text">
+      <span class="badge">الجزء الثلاثون • ٣٧ سورة • ٥٦٤ آية</span>
+      <h2>﴿ كِتَابٌ أَنزَلْنَاهُ إِلَيْكَ مُبَارَكٌ لِّيَدَّبَّرُوا آيَاتِهِ ﴾</h2>
+      <p class="subtitle">رحلة إيمانية مصمّمة من النبأ إلى الناس: التفسير المختصر، الوقفات التدبرية، العمل بالآيات، والتوجيهات — كما وردت في كتاب «تدبر وعمل» بتبسيط محكَم للأسرة والمعلم والحلقة.</p>
+      <div class="hero-actions">
+        <div class="search-box">
+          <input id="searchInput" type="search" placeholder="ابحث باسم السورة... مثال: الشمس، الفلق">
+          <span class="icon">🔍</span>
+        </div>
+        <div class="filters">
+          <button class="filter active" data-f="all">الكل</button>
+          <button class="filter" data-f="makki">مكية</button>
+          <button class="filter" data-f="madani">مدنية</button>
+          <button class="filter" data-f="done">✓ المنجزة</button>
+        </div>
+      </div>
+      <div class="stats">
+        <div><b id="statDone">0</b><span>سورة أتممت تدبرها</span></div>
+        <div><b>37</b><span>سورة في جزء عم</span></div>
+        <div><b>100%</b><span>منهج تدبر وعمل</span></div>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="orn">✦</div>
+      <h3>كيف تتدبر معنا؟</h3>
+      <ol>
+        <li><b>اقرأ</b> مقصد السورة والتفسير الإجمالي</li>
+        <li><b>تأمل</b> الوقفات التدبرية (لماذا قال الله كذا؟)</li>
+        <li><b>اعمل</b> طبّق عملاً واحداً من «العمل بالآيات»</li>
+        <li><b>علِّم</b> انشر توجيهاً وسجّل إنجازك ✔</li>
+      </ol>
+      <a href="#surahs" class="btn-gold">ابدأ من سورة النبأ ↓</a>
+      <p class="hint">جميع المواد مختصرة من كتاب القرآن تدبر وعمل بإشراف مركز المنهاج — صياغة مبسطة أمينة للمعنى.</p>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+  <section id="manhaj" class="manhaj">
+    <h2 class="sec-title">منهجية «تدبّر وعمل» في هذا الموقع</h2>
+    <div class="manhaj-grid">
+      <div class="m-card"><span>📖</span><h4>معاني الكلمات</h4><p>شرح غريب الألفاظ بعبارة قصيرة لتفهم الآية قبل تفسيرها.</p></div>
+      <div class="m-card"><span>💡</span><h4>التفسير المختصر</h4><p>خلاصة المعنى الإجمالي للآيات بأسلوب التفسير الميسّر.</p></div>
+      <div class="m-card"><span>🤲</span><h4>وقفات تدبرية</h4><p>لمسات بلاغية وإيمانية: لماذا ختمت الآية بهذين الاسمين؟ ما الرابط؟</p></div>
+      <div class="m-card"><span>✅</span><h4>العمل بالآيات</h4><p>تطبيق عملي واحد على الأقل تخرج به من كل سورة.</p></div>
+      <div class="m-card"><span>🧭</span><h4>التوجيهات</h4><p>رسائل تربوية ودعوية مستنبطة من السورة للحياة اليومية.</p></div>
+    </div>
+  </section>
+
+  <section id="surahs">
+    <div class="sec-head">
+      <h2 class="sec-title">سور جزء عمَّ — ٣٧ سورة</h2>
+      <p id="countLabel">عرض 37 سورة</p>
+    </div>
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <section id="khatma" class="khatma">
+    <div class="khatma-box">
+      <div>
+        <h2>ختمة التدبّر والعمل</h2>
+        <p>تقدّمك محفوظ في متصفحك. أتمم سورة واحدة يومياً تُنهي جزء عمَّ تدبراً وعملاً في 37 يوماً.</p>
+        <div class="progress"><div id="bar"></div></div>
+        <p id="progressLabel" class="progress-label"></p>
+      </div>
+      <div class="khatma-actions">
+        <button id="resetBtn" class="btn-ghost">إعادة التتبع</button>
+        <button id="printBtn" class="btn-gold" onclick="window.print()">🖨 طباعة ورد المحاسبة</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz" class="quiz-sec">
+    <h2 class="sec-title">اختبر معلوماتك في جزء عمَّ</h2>
+    <p class="quiz-sub">أسئلة تلقائية من محتوى الموقع نفسه: المقاصد • المكية والمدنية • معاني الكلمات • الوقفات التدبرية • العمل بالآيات</p>
+    <div class="quiz-setup" id="quizSetup">
+      <div class="quiz-opts">
+        <label>عدد الأسئلة:
+          <select id="qCount">
+            <option value="5">5 أسئلة</option>
+            <option value="10" selected>10 أسئلة</option>
+            <option value="15">15 سؤالًا</option>
+            <option value="20">20 سؤالًا</option>
+          </select>
+        </label>
+        <label>النمط:
+          <select id="qMode">
+            <option value="mix">منوّع (الكل)</option>
+            <option value="maqasad">مقاصد السور</option>
+            <option value="kalimat">معاني الكلمات</option>
+            <option value="tadabbur">تدبر وعمل</option>
+            <option value="info">معلومات عامة</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn-gold" id="startQuiz">✦ ابدأ الاختبار</button>
+      <p id="bestScore" class="best"></p>
+    </div>
+    <div class="quiz-card hidden" id="quizCard">
+      <div class="quiz-top"><span id="qNum"></span><span id="qCat"></span><span id="qScore"></span></div>
+      <div class="progress quiz-bar"><div id="qBar"></div></div>
+      <h3 id="qText"></h3>
+      <div id="qOpts" class="q-opts"></div>
+      <div id="qFeed" class="q-feed"></div>
+      <div class="quiz-nav">
+        <button class="btn" id="nextQ" disabled>التالي ⟵</button>
+        <button class="btn" id="quitQ">إنهاء</button>
+      </div>
+    </div>
+    <div class="quiz-result hidden" id="quizResult"></div>
+  </section>
+
+  <section id="about" class="about">
+    <h2 class="sec-title">عن كتاب «القرآن تدبّر وعمل»</h2>
+    <p>كتاب منهجي جمع بين <b>التفسير المختصر</b> و<b>التدبر</b> و<b>العمل</b>، من إصدار مركز المنهاج للإشراف والتدريب التربوي. قسّم الصفحة القرآنية إلى: معاني الكلمات، التفسير، الوقفات التدبرية، العمل بالآيات، والتوجيهات. اعتمد هذا الموقع نفس التقسيم مع تبسيط العبارة وتلخيص السور الطوال، مع الحفاظ على أمانة المعنى. للتحقق والتوسع ارجع لأصل الكتاب (متاح PDF وقفاً لله).</p>
+    <div class="sources">
+      <span>المصادر المعتمدة: التفسير الميسر • المختصر في التفسير • وقفات تدبر وعمل • أسباب النزول الصحيحة</span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container foot">
+    <p>صُمم لوجه الله — وقف لتدبر جزء عمَّ • صياغة أمينة لمنهج «تدبر وعمل» • ١٤٤٧هـ</p>
+    <p class="dua">﴿ رَبَّنَا تَقَبَّلْ مِنَّا ۖ إِنَّكَ أَنتَ السَّمِيعُ الْعَلِيمُ ﴾</p>
+  </div>
+</footer>
+
+<!-- Modal -->
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <button id="closeBtn" class="close">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="surahs-data.js"></script>
+<script src="app.js"></script>
+<script src="quiz.js"></script>
+</body>
+</html>
