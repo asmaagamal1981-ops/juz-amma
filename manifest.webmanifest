@@ -1,0 +1,38 @@
+{
+  "name": "تفسير جزء عم — تدبّر وعمل",
+  "short_name": "جزء عم",
+  "description": "تفسير مختصر لسور جزء العم وفق منهج «القرآن تدبّر وعمل»: معاني الكلمات، التفسير، الوقفات التدبرية، العمل بالآيات، واختبارات تقييم تفاعلية.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "/juz-amma/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#f2f8fb",
+  "theme_color": "#0f4c5c",
+  "categories": ["education", "books", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "اختبارات التقييم",
+      "short_name": "الاختبارات",
+      "description": "ابدأ اختبارًا أو أعدّ اختبارًا للفصل",
+      "url": "./quiz.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "بطاقات السور",
+      "short_name": "السور",
+      "description": "تصفّح سور جزء عم",
+      "url": "./index.html#surahs",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
