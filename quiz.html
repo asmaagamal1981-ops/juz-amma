@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اختبارات التقييم | تفسير جزء عم — تدبّر وعمل</title>
+<meta name="description" content="صفحة اختبارات تقييم مستقلة لموقع تفسير جزء عم: أسئلة مولّدة من المحتوى، إعداد مخصص للاختبار، مؤقّت، درجة نجاح، ومراجعة تفصيلية للنتائج.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Cairo:wght@300;400;600;700;900&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container topbar-inner">
+    <div class="brand">
+      <div class="logo">۝</div>
+      <div>
+        <h1>تَدَبُّر <span>جزء عمَّ</span></h1>
+        <p>صفحة الاختبارات والتقييم</p>
+      </div>
+    </div>
+    <nav>
+      <a href="index.html">الرئيسية</a>
+      <a href="index.html#manhaj">المنهجية</a>
+      <a href="index.html#khatma">ختمة التدبر</a>
+      <a href="quiz.html" class="active">اختبارات التقييم</a>
+      <a href="index.html#about">عن الكتاب</a>
+      <button id="themeBtn" title="الوضع الليلي">🌙</button>
+    </nav>
+  </div>
+</header>
+
+<section class="ex-hero">
+  <div class="container ex-hero-inner">
+    <div>
+      <span class="badge">اختبارات تقييم • 37 سورة • أسئلة مولّدة من المحتوى</span>
+      <h2>اختبارات التقييم والاختبارات التحصيلية</h2>
+      <p class="subtitle">
+        صفحة مستقلة لإعداد اختبارات تقييم للمعلمين والأسر وحلقات القرآن: تختار عدد الأسئلة ونوعها ونطاق السور
+        والمؤقّت ودرجة النجاح، ثم تتابع نتيجتك وتطّلع على تحليل تفصيلي لكل إجابة.
+      </p>
+      <div class="ex-hero-actions">
+        <a href="#setup" class="btn-gold">✦ ابدأ إعداد اختبار</a>
+        <a href="#bank" class="btn-ghost-light">تصفّح بنك الأسئلة</a>
+      </div>
+    </div>
+    <div class="ex-hero-stats">
+      <div><b id="hsCats">9</b><span>أنواع أسئلة</span></div>
+      <div><b id="hsBank">0</b><span>سؤال متاح</span></div>
+      <div><b>37</b><span>سورة في الجزء</span></div>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+
+  <!-- ============ إعداد الاختبار ============ -->
+  <section id="setup" class="ex-section">
+    <h2 class="sec-title">إعداد اختبار التقييم</h2>
+    <p class="ex-sub">اضبط المواصفات ثم ابدأ — تُبنى الأسئلة آليًا من محتوى السور (تفسير • وقفات • عمل • معلومات).</p>
+
+    <div class="ex-setup-grid">
+      <!-- اللوحة الرئيسية -->
+      <form class="ex-card" id="setupForm" autocomplete="off">
+        <h3 class="ex-card-title">① مواصفات الاختبار</h3>
+
+        <div class="ex-field">
+          <label class="ex-label" for="qCount">عدد الأسئلة</label>
+          <div class="ex-quick">
+            <button type="button" class="chip" data-q="5">5</button>
+            <button type="button" class="chip" data-q="10">10</button>
+            <button type="button" class="chip on" data-q="15">15</button>
+            <button type="button" class="chip" data-q="20">20</button>
+            <button type="button" class="chip" data-q="30">30</button>
+            <button type="button" class="chip" data-q="40">40</button>
+          </div>
+          <input id="qCount" class="ex-input" type="number" min="1" max="80" value="15">
+          <small class="ex-hint">من 1 إلى 80 سؤالًا</small>
+        </div>
+
+        <div class="ex-field">
+          <span class="ex-label">أنواع الأسئلة</span>
+          <div class="ex-cats" id="catList"></div>
+          <small class="ex-hint">اضغط على النوع لتحديده أو إلغاءه — ويمكن اختيار عدة أنواع</small>
+        </div>
+
+        <div class="ex-two">
+          <div class="ex-field">
+            <label class="ex-label" for="qLevel">مستوى الصعوبة</label>
+            <select id="qLevel" class="ex-input">
+              <option value="0">الكل</option>
+              <option value="1">سهل (معلومات السورة)</option>
+              <option value="2">متوسط (مقاصد ومعانٍ)</option>
+              <option value="3">صعب (تدبّر وعمل)</option>
+            </select>
+          </div>
+          <div class="ex-field">
+            <label class="ex-label" for="qOrder">ترتيب الأسئلة</label>
+            <select id="qOrder" class="ex-input">
+              <option value="shuffle">خلط عشوائي</option>
+              <option value="surah">حسب ترتيب المصحف</option>
+            </select>
+          </div>
+        </div>
+
+        <h3 class="ex-card-title">② نطاق السور</h3>
+        <div class="ex-field">
+          <label class="ex-label" for="qScope">النطاق</label>
+          <select id="qScope" class="ex-input">
+            <option value="all">كل سور جزء عم (37)</option>
+            <option value="range">نطاق محدد: من سورة … إلى سورة</option>
+            <option value="makki">السور المكية فقط</option>
+            <option value="madani">السور المدنية فقط</option>
+            <option value="custom">سور مختارة يدويًا</option>
+          </select>
+        </div>
+
+        <div class="ex-field" id="rangeBox" hidden>
+          <div class="ex-two">
+            <div>
+              <label class="ex-label" for="qFrom">من السورة رقم</label>
+              <select id="qFrom" class="ex-input"></select>
+            </div>
+            <div>
+              <label class="ex-label" for="qTo">إلى السورة رقم</label>
+              <select id="qTo" class="ex-input"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="ex-field" id="surahBox" hidden>
+          <span class="ex-label">اختر السور <small class="ex-hint" id="surahCount">0 سورة</small></span>
+          <div class="ex-chips" id="surahChips"></div>
+          <div class="ex-mini">
+            <button type="button" class="chip" data-sel="all">تحديد الكل</button>
+            <button type="button" class="chip" data-sel="none">إلغاء التحديد</button>
+            <button type="button" class="chip" data-sel="makki">المكية</button>
+            <button type="button" class="chip" data-sel="madani">المدنية</button>
+          </div>
+        </div>
+
+        <h3 class="ex-card-title">③ الوقت ودرجة النجاح</h3>
+        <div class="ex-three">
+          <div class="ex-field">
+            <label class="ex-label" for="qTime">مدة الاختبار</label>
+            <select id="qTime" class="ex-input">
+              <option value="0">بدون مؤقّت</option>
+              <option value="5" selected>5 دقائق</option>
+              <option value="10">10 دقائق</option>
+              <option value="15">15 دقيقة</option>
+              <option value="20">20 دقيقة</option>
+              <option value="30">30 دقيقة</option>
+              <option value="45">45 دقيقة</option>
+              <option value="60">60 دقيقة</option>
+            </select>
+          </div>
+          <div class="ex-field">
+            <label class="ex-label" for="qPass">درجة النجاح</label>
+            <select id="qPass" class="ex-input">
+              <option value="40">40%</option>
+              <option value="50" selected>50%</option>
+              <option value="60">60%</option>
+              <option value="70">70%</option>
+              <option value="80">80%</option>
+              <option value="90">90%</option>
+              <option value="100">100%</option>
+            </select>
+          </div>
+          <div class="ex-field">
+            <label class="ex-label" for="qInstant">التصحيح الفوري</label>
+            <select id="qInstant" class="ex-input">
+              <option value="1" selected>نعم — بعد كل إجابة</option>
+              <option value="0">لا — في النهاية فقط</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ex-pool">
+          <span>المتاح من هذا الإعداد: <b id="poolInfo">—</b></span>
+          <span id="cfgWarn" class="ex-warn" hidden>عدد الأسئلة أكبر من المتاح — سيُخفَّض إلى العدد المتاح.</span>
+        </div>
+
+        <div class="ex-actions">
+          <button type="submit" class="btn-gold" id="startBtn">✦ ابدأ الاختبار</button>
+          <button type="button" class="btn ex-btn" id="linkBtn">🔗 نسخ رابط الاختبار</button>
+          <button type="button" class="btn ex-btn" id="resetCfg">↺ إعداد افتراضي</button>
+        </div>
+      </form>
+
+      <!-- اللوحة الجانبية -->
+      <aside class="ex-side">
+        <div class="ex-card">
+          <h3 class="ex-card-title">سجلّك</h3>
+          <div class="ex-mini-stats">
+            <div><b id="stBest">—</b><span>أفضل نسبة</span></div>
+            <div><b id="stAvg">—</b><span>متوسطك</span></div>
+            <div><b id="stRuns">0</b><span>عدد الاختبارات</span></div>
+          </div>
+          <ul class="ex-hist" id="histList"></ul>
+          <button type="button" class="btn ex-btn ex-danger" id="clearHist">🗑 مسح السجل</button>
+        </div>
+
+        <div class="ex-card ex-card-soft">
+          <h3 class="ex-card-title">أنواع الأسئلة المتاحة</h3>
+          <ul class="ex-list" id="catListInfo"></ul>
+        </div>
+
+        <div class="ex-card ex-card-soft">
+          <h3 class="ex-card-title">للاستخدام في الحصة</h3>
+          <p class="ex-note">
+            • اضبط الإعدادات ثم <b>نسخ رابط الاختبار</b> وشاركه؛ يفتح الرابط الاختبار بالمواصفات نفسها.<br>
+            • النتيجة تظهر للطالب مباشرة: النسبة، وتحليل كل نوع سؤال، ومراجعة الإجابات مع التعليل.<br>
+            • كل محاولة تُحفظ في سجل المتصفح (أفضل نتيجة ومتوسطك) ولا تُرسل إلى أي خادم.<br>
+            • لتسجيل الدرجات رسميًا: اطبع نتيجة الاختبار أو استخدم سجلّ درجات الفصل.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ شاشة الاختبار ============ -->
+  <section id="exam" class="ex-section" hidden>
+    <div class="ex-exam-bar">
+      <div class="ex-exam-meta">
+        <span class="ex-pill" id="exNum">السؤال 1 / 1</span>
+        <span class="ex-pill ex-cat" id="exCat">—</span>
+        <span class="ex-pill ex-score" id="exScore">النقاط: 0</span>
+      </div>
+      <div class="ex-exam-timer">
+        <span class="ex-timer" id="exTimer">⏱ --:--</span>
+        <button type="button" class="btn ex-btn ex-quit" id="exQuit">إنهاء وتسليم</button>
+      </div>
+      <div class="progress ex-prog"><div id="exProg"></div></div>
+    </div>
+
+    <div class="ex-exam-grid">
+      <div class="ex-card ex-question-card">
+        <span class="ex-qtag" id="exQCat">—</span>
+        <h3 id="exQText">—</h3>
+        <div id="exOpts" class="q-opts"></div>
+        <div id="exFeed" class="q-feed"></div>
+        <div class="ex-nav">
+          <button type="button" class="btn" id="exPrev">⟵ السابق</button>
+          <button type="button" class="btn" id="exFlag">⚑ علامة</button>
+          <button type="button" class="btn primary" id="exNext">التالي ⟵</button>
+        </div>
+        <small class="ex-hint">اختصار: الأرقام 1–4 للاختيار • Enter للتالي • Shift+Enter للسابق</small>
+      </div>
+
+      <aside class="ex-side">
+        <div class="ex-card">
+          <h3 class="ex-card-title">خريطة الأسئلة</h3>
+          <div class="ex-palette" id="exPalette"></div>
+          <ul class="ex-legend">
+            <li><span class="lg lg-done"></span> مُجاب</li>
+            <li><span class="lg lg-flag"></span> معلّم</li>
+            <li><span class="lg lg-cur"></span> الحالي</li>
+            <li><span class="lg lg-empty"></span> لم يُجب</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ النتيجة ============ -->
+  <section id="result" class="ex-section" hidden>
+    <div class="ex-card ex-result-head">
+      <div class="ex-res-ring" id="resRing">0/0</div>
+      <div>
+        <h2 id="resMsg">—</h2>
+        <p id="resLine">—</p>
+        <span class="ex-badge" id="resBadge">—</span>
+      </div>
+    </div>
+
+    <div class="ex-two">
+      <div class="ex-card">
+        <h3 class="ex-card-title">تحليل حسب نوع السؤال</h3>
+        <div id="resBreakdown" class="ex-break"></div>
+      </div>
+      <div class="ex-card">
+        <h3 class="ex-card-title">ملخّص الاختبار</h3>
+        <ul class="ex-sum" id="resSummary"></ul>
+      </div>
+    </div>
+
+    <div class="ex-card">
+      <h3 class="ex-card-title">مراجعة الإجابات</h3>
+      <div class="ex-mini">
+        <button type="button" class="chip on" data-rev="all">الكل</button>
+        <button type="button" class="chip" data-rev="wrong">الخاطئة فقط</button>
+        <button type="button" class="chip" data-rev="none">غير المُجابة</button>
+      </div>
+      <div id="resReview" class="review"></div>
+    </div>
+
+    <div class="ex-actions ex-center">
+      <button type="button" class="btn-gold" id="againBtn">🔄 اختبار جديد بنفس الإعدادات</button>
+      <button type="button" class="btn ex-btn" id="newBtn">⚙ إعداد اختبار مختلف</button>
+      <button type="button" class="btn ex-btn" id="linkBtn2">🔗 مشاركة رابط هذا الاختبار</button>
+      <button type="button" class="btn ex-btn" id="printBtn">🖨 طباعة النتيجة</button>
+    </div>
+  </section>
+
+  <!-- ============ بنك الأسئلة ============ -->
+  <section id="bank" class="ex-section">
+    <h2 class="sec-title">بنك الأسئلة</h2>
+    <p class="ex-sub">كل الأسئلة مولّدة من محتوى السور داخل الموقع — اضغط «معاينة» لترى أسئلة السورة مع إجاباتها.</p>
+    <div class="ex-mini ex-center" id="bankFilter"></div>
+    <div id="bankGrid" class="ex-bank"></div>
+  </section>
+
+</main>
+
+<!-- نافذة معاينة الأسئلة -->
+<div id="bankModal" class="ex-modal" hidden>
+  <div class="ex-modal-card">
+    <button type="button" class="close" id="bankClose">✕</button>
+    <h3 id="bankTitle">معاينة الأسئلة</h3>
+    <div id="bankBody" class="ex-modal-body"></div>
+    <div class="ex-actions ex-center">
+      <button type="button" class="btn-gold" id="bankStart">✦ اختبار من هذه السورة</button>
+      <button type="button" class="btn ex-btn" id="bankClose2">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container foot">
+    <p>صفحة الاختبارات — وقف لوجه الله • مبنية على محتوى كتاب «القرآن تدبر وعمل» • ١٤٤٧هـ</p>
+    <p class="dua">﴿ رَبَّنَا تَقَبَّلْ مِنَّا ۖ إِنَّكَ أَنتَ السَّمِيعُ الْعَلِيمُ ﴾</p>
+  </div>
+</footer>
+
+<script src="surahs-data.js"></script>
+<script src="exam.js"></script>
+</body>
+</html>
