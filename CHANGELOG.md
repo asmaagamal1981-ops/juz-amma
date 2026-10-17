@@ -20,7 +20,7 @@
 |---|---|---|---|---|
 | 1 | 2026-10-11 | النشر الأول: موقع تفسير جزء عم — 37 سورة + اختبار مدمج + تتبع الإنجاز | [a47eac1](https://github.com/asmaagamal1981-ops/juz-amma/commit/a47eac1) | [نشر #38154299330](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/38154299330) |
 | 2 | 2026-10-17 | إضافة صفحة `quiz.html`: اختبارات تقييم مستقلة (بنك ٣٣٣ سؤالًا • إعداد مخصص • مؤقّت • تحليل نتائج • مشاركة رابط اختبار) + تحديث القائمة الرئيسية وسير النشر | [3a46982](https://github.com/asmaagamal1981-ops/juz-amma/commit/3a46982) | [نشر #39058145505](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/39058145505) |
-| 3 | 2026-10-17 | إنشاء سجل التحديثات وروابط النشر (هذا الملف) | يُحدَّث بعد الدفع | — |
+| 3 | 2026-10-17 | إنشاء سجل التحديثات وروابط النشر (هذا الملف) | [da6990c](https://github.com/asmaagamal1981-ops/juz-amma/commit/da6990c) | [نشر #39059551304](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/39059551304) |
 
 ## النسخ المنشورة
 
@@ -28,6 +28,10 @@
 |---|---|---|
 | v1 — النسخة الأولى | https://asmaagamal1981-ops.github.io/juz-amma/ | 2026-10-11 |
 | v2 — مع صفحة الاختبارات | https://asmaagamal1981-ops.github.io/juz-amma/quiz.html | 2026-10-17 |
+| v3 — مع سجل الروابط | https://github.com/asmaagamal1981-ops/juz-amma/blob/main/CHANGELOG.md | 2026-10-17 |
+
+> **قاعدة المتابعة:** كل تغيير جديد يُضاف صفُّه في جدول «سجل التغييرات» يحمل رابط الـ commit ورابط النشر.
+> رابط الـ commit لنفسه يُكتب في التحديث التالي (لأن رقمه لا يُعرف إلا بعد الدفع)، لذا يُكتب آخر صف دائمًا في التغيير التالي.
 
 ## كيف تُحفظ نسخة كل تغيير؟
 
