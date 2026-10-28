@@ -10,6 +10,7 @@
 | المستودع | https://github.com/asmaagamal1981-ops/juz-amma |
 | الموقع المنشور | https://asmaagamal1981-ops.github.io/juz-amma/ |
 | صفحة اختبارات التقييم | https://asmaagamal1981-ops.github.io/juz-amma/quiz.html |
+| تطبيق حفظ جزء عمَّ للأطفال | https://asmaagamal1981-ops.github.io/juz-amma/kids.html |
 | سجل التغييرات (Commits) | https://github.com/asmaagamal1981-ops/juz-amma/commits/main |
 | عمليات النشر (Actions) | https://github.com/asmaagamal1981-ops/juz-amma/actions |
 | إعدادات النشر | https://github.com/asmaagamal1981-ops/juz-amma/settings/pages |
@@ -22,6 +23,7 @@
 | 2 | 2026-10-17 | إضافة صفحة `quiz.html`: اختبارات تقييم مستقلة (بنك ٣٣٣ سؤالًا • إعداد مخصص • مؤقّت • تحليل نتائج • مشاركة رابط اختبار) + تحديث القائمة الرئيسية وسير النشر | [3a46982](https://github.com/asmaagamal1981-ops/juz-amma/commit/3a46982) | [نشر #39058145505](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/39058145505) |
 | 3 | 2026-10-17 | إنشاء سجل التحديثات وروابط النشر (هذا الملف) | [da6990c](https://github.com/asmaagamal1981-ops/juz-amma/commit/da6990c) | [نشر #39059551304](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/39059551304) |
 | 4 | 2026-10-17 | تطبيق جوال PWA: `manifest.webmanifest` + `sw.js` (عمل دون إنترنت) + `pwa.js` (زر التثبيت) + 4 أيقونات + اختصارات التطبيق | [2a374b8](https://github.com/asmaagamal1981-ops/juz-amma/commit/2a374b8) | [نشر #39060718086](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/39060718086) |
+| 5 | 2026-10-28 | تطبيق «رحلة حفظ جزء عمَّ» للأطفال (`kids.html`): حسابات محلية بكلمات مرور PBKDF2، ورد حفظ ومراجعة بتباعد متباعد (SRS)، ٤ أنماط تسميع وتصحيح (ذاتي • ترتيب الكلمات • أكمل الفراغ • تسجيل صوتي)، تلاوة الشيخ الحصري لكل آية + السورة كاملة، نجوم وأوسمة ومستويات و٥ جوائز وشهادات PNG، تصدير/استيراد، وربطه بالرئيسية وPWA v6 | [c74d646](https://github.com/asmaagamal1981-ops/juz-amma/commit/c74d646) | [نشر #40754619005](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/40754619005) |
 
 ## النسخ المنشورة
 
@@ -31,6 +33,7 @@
 | v2 — مع صفحة الاختبارات | https://asmaagamal1981-ops.github.io/juz-amma/quiz.html | 2026-10-17 |
 | v3 — مع سجل الروابط | https://github.com/asmaagamal1981-ops/juz-amma/blob/main/CHANGELOG.md | 2026-10-17 |
 | v4 — تطبيق جوال PWA | https://asmaagamal1981-ops.github.io/juz-amma/ | 2026-10-17 |
+| v5 — تطبيق حفظ جزء عمَّ للأطفال | https://asmaagamal1981-ops.github.io/juz-amma/kids.html | 2026-10-28 |
 
 > **قاعدة المتابعة:** كل تغيير جديد يُضاف صفُّه في جدول «سجل التغييرات» يحمل رابط الـ commit ورابط النشر.
 > رابط الـ commit لنفسه يُكتب في التحديث التالي (لأن رقمه لا يُعرف إلا بعد الدفع)، لذا يُكتب آخر صف دائمًا في التغيير التالي.
