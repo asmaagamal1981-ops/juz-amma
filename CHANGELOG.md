@@ -24,6 +24,7 @@
 | 3 | 2026-10-17 | إنشاء سجل التحديثات وروابط النشر (هذا الملف) | [da6990c](https://github.com/asmaagamal1981-ops/juz-amma/commit/da6990c) | [نشر #39059551304](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/39059551304) |
 | 4 | 2026-10-17 | تطبيق جوال PWA: `manifest.webmanifest` + `sw.js` (عمل دون إنترنت) + `pwa.js` (زر التثبيت) + 4 أيقونات + اختصارات التطبيق | [2a374b8](https://github.com/asmaagamal1981-ops/juz-amma/commit/2a374b8) | [نشر #39060718086](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/39060718086) |
 | 5 | 2026-10-28 | تطبيق «رحلة حفظ جزء عمَّ» للأطفال (`kids.html`): حسابات محلية بكلمات مرور PBKDF2، ورد حفظ ومراجعة بتباعد متباعد (SRS)، ٤ أنماط تسميع وتصحيح (ذاتي • ترتيب الكلمات • أكمل الفراغ • تسجيل صوتي)، تلاوة الشيخ الحصري لكل آية + السورة كاملة، نجوم وأوسمة ومستويات و٥ جوائز وشهادات PNG، تصدير/استيراد، وربطه بالرئيسية وPWA v6 | [c74d646](https://github.com/asmaagamal1981-ops/juz-amma/commit/c74d646) | [نشر #40754619005](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/40754619005) |
+| 6 | 2026-10-28 | توثيق رابط التطبيق الجديد في «الروابط الثابتة» و«النسخ المنشورة»، وإضافة صف التغيير بروابط الكوميت والنشر | [fc2b83f](https://github.com/asmaagamal1981-ops/juz-amma/commit/fc2b83f) | [نشر #40755199233](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/40755199233) |
 
 ## النسخ المنشورة
 
