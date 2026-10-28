@@ -2,7 +2,7 @@
    Service Worker — تطبيق «تفسير جزء عم — تدبّر وعمل»
    يعمل دون اتصال بالإنترنت بعد أول فتح
    ========================================================= */
-const VERSION = 'juz-amma-v5';
+const VERSION = 'juz-amma-v6';
 const CORE_CACHE = VERSION + '-core';
 const RUNTIME_CACHE = VERSION + '-runtime';
 
@@ -11,10 +11,14 @@ const CORE = [
   './',
   './index.html',
   './quiz.html',
+  './kids.html',
   './styles.css',
+  './kids.css',
   './app.js',
   './exam.js',
   './quiz.js',
+  './kids.js',
+  './quran-juz30.js',
   './surahs-data.js',
   './pwa.js',
   './manifest.webmanifest',

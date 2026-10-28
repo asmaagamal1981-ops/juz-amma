@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>رحلة حفظ جزء عم | تطبيق الأطفال</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f4c5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="حفظ جزء عم">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="description" content="تطبيق تفاعلي ممتع للأطفال لحفظ جزء عم: حساب خاص لكل طفل، ورد يومي للحفظ الجديد وآخر للمراجعة، تسميع وتصحيح، تلاوة الشيخ محمود خليل الحصري، جوائز تشجيعية وشهادات تقدير.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Cairo:wght@300;400;600;700;900&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="kids.css">
+</head>
+<body class="kids-page">
+
+<!-- ==================== شاشة الدخول والتسجيل ==================== -->
+<div class="k-auth" id="kAuth" hidden>
+  <div class="k-auth-brand">
+    <div class="k-auth-stars" aria-hidden="true">
+      <span style="top:12%;right:14%;animation-delay:0s">✦</span>
+      <span style="top:26%;right:78%;animation-delay:1.2s">✧</span>
+      <span style="top:62%;right:88%;animation-delay:.6s">✦</span>
+      <span style="top:80%;right:22%;animation-delay:1.8s">✧</span>
+      <span style="top:44%;right:38%;animation-delay:2.4s">✦</span>
+      <span style="top:8%;right:56%;animation-delay:.9s">✧</span>
+      <span style="top:90%;right:64%;animation-delay:1.5s">✦</span>
+    </div>
+    <div class="k-auth-logo" aria-hidden="true">۝</div>
+    <h1>رحلة حفظ <span>جزء عمَّ</span></h1>
+    <p>تطبيق ممتع يرافق طفلك في حفظ جزء عمَّ خطوة بخطوة: ورد يومي، مراجعة ذكية، تسميع وتصحيح، جوائز وشهادات.</p>
+    <div class="k-auth-feats">
+      <div class="k-auth-feat"><i>📅</i><div><b>ورد يومي منظّم</b><small>حفظ جديد + مراجعة تلقائية بتكرار متباعد</small></div></div>
+      <div class="k-auth-feat"><i>🎙️</i><div><b>تسميع وتصحيح</b><small>سجّل صوتك وقارن بتلاوة الشيخ الحصري</small></div></div>
+      <div class="k-auth-feat"><i>🏆</i><div><b>جوائز وشهادات</b><small>نجوم وأوسمة وشهادات تقدير قابلة للطباعة</small></div></div>
+    </div>
+    <a class="k-auth-back" href="index.html">← العودة إلى موقع التفسير</a>
+  </div>
+
+  <div class="k-auth-panel">
+    <div class="k-auth-card">
+      <h2 id="kAuthTitle">أهلًا بك في رحلتك 🌟</h2>
+      <p class="k-sub" id="kAuthSub">أدخل بياناتك للدخول إلى حسابك ومتابعة حفظك.</p>
+
+      <div class="k-auth-tabs" role="tablist">
+        <button type="button" class="k-auth-tab is-on" data-auth-tab="login" role="tab" aria-selected="true">تسجيل الدخول</button>
+        <button type="button" class="k-auth-tab" data-auth-tab="signup" role="tab" aria-selected="false">حساب جديد</button>
+      </div>
+
+      <form id="kAuthForm" novalidate autocomplete="on">
+        <div class="k-field" data-signup-only hidden>
+          <label for="kName">اسم الطفل</label>
+          <div class="k-input-wrap">
+            <span class="k-in-ico" aria-hidden="true">🧒</span>
+            <input id="kName" class="k-input" type="text" placeholder="مثال: عبد الرحمن" maxlength="30" autocomplete="name">
+          </div>
+          <span class="k-err" id="kNameErr"></span>
+        </div>
+
+        <div class="k-field" data-signup-only hidden>
+          <label>اختر صورتك المفضّلة</label>
+          <div class="k-avatars" id="kAvatarPick" role="group" aria-label="اختيار صورة رمزية"></div>
+        </div>
+
+        <div class="k-field">
+          <label for="kLogin">البريد الإلكتروني أو رقم الهاتف</label>
+          <div class="k-input-wrap">
+            <span class="k-in-ico" aria-hidden="true">✉️</span>
+            <input id="kLogin" class="k-input" type="text" inputmode="email" placeholder="name@example.com أو 05xxxxxxxx" autocomplete="username" spellcheck="false">
+          </div>
+          <span class="k-err" id="kLoginErr"></span>
+        </div>
+
+        <div class="k-field">
+          <label for="kPass">كلمة المرور</label>
+          <div class="k-input-wrap">
+            <span class="k-in-ico" aria-hidden="true">🔒</span>
+            <input id="kPass" class="k-input" type="password" placeholder="٦ أحرف على الأقل" autocomplete="current-password">
+            <button type="button" class="k-eye" id="kEye" aria-label="إظهار كلمة المرور">👁️</button>
+          </div>
+          <span class="k-err" id="kPassErr"></span>
+        </div>
+
+        <div class="k-field" data-signup-only hidden>
+          <label for="kPass2">تأكيد كلمة المرور</label>
+          <div class="k-input-wrap">
+            <span class="k-in-ico" aria-hidden="true">🔐</span>
+            <input id="kPass2" class="k-input" type="password" placeholder="أعد كتابة كلمة المرور" autocomplete="new-password">
+          </div>
+          <span class="k-err" id="kPass2Err"></span>
+        </div>
+
+        <div class="k-field" data-signup-only hidden>
+          <label>مقدار الورد اليومي (عدد الآيات)</label>
+          <div class="k-seg" id="kWirdPick" role="group" aria-label="مقدار الورد اليومي">
+            <button type="button" data-wird="2">٢ آيات</button>
+            <button type="button" data-wird="3" class="is-on">٣ آيات</button>
+            <button type="button" data-wird="5">٥ آيات</button>
+            <button type="button" data-wird="8">٨ آيات</button>
+          </div>
+          <span class="k-err" id="kFormErr"></span>
+        </div>
+
+        <button type="submit" class="k-btn k-btn--primary k-btn--wide k-btn--lg" id="kAuthSubmit" style="margin-top:6px">دخول 🚀</button>
+      </form>
+
+      <p class="k-auth-note">🔒 <b>خصوصية كاملة:</b> تُحفظ بياناتك على جهازك فقط (Local Storage) ولا تُرسل إلى أي خادم.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== التطبيق ==================== -->
+<div class="k-shell" id="kApp" hidden>
+  <aside class="k-side">
+    <div class="k-brand-mini">
+      <div class="k-logo" aria-hidden="true">۝</div>
+      <div><b>رحلة حفظ جزء عم</b><small>تسميع • مراجعة • جوائز</small></div>
+    </div>
+
+    <div class="k-side-child">
+      <div class="k-av" id="kSideAvatar" aria-hidden="true">🦁</div>
+      <div class="k-who">
+        <b id="kSideName">—</b>
+        <small><span id="kSideLevel">مبتدئ</span> · <span id="kSideStars">٠</span> ⭐</small>
+      </div>
+    </div>
+
+    <div class="k-side-nav">
+      <button class="k-nav-item" data-go="home"><i>🏠</i> لوحتي <small id="kNavStars">٠ ⭐</small></button>
+      <button class="k-nav-item" data-go="wird"><i>📅</i> وردي اليوم</button>
+      <button class="k-nav-item" data-go="memorize"><i>📖</i> الحفظ</button>
+      <button class="k-nav-item" data-go="rewards"><i>🏆</i> جوائزي</button>
+      <button class="k-nav-item" data-go="certs"><i>📜</i> شهاداتي</button>
+      <button class="k-nav-item" data-go="settings"><i>⚙️</i> الإعدادات</button>
+    </div>
+
+    <div class="k-side-foot">
+      <button class="k-btn k-btn--ghost k-btn--sm" id="kThemeSide">🌙 الوضع الليلي</button>
+      <button class="k-btn k-btn--ghost k-btn--sm" id="kLogoutSide">🚪 تسجيل الخروج</button>
+      <div style="font-size:10.5px;color:var(--k-muted);text-align:center;font-weight:700;line-height:1.7">
+        تلاوة: الشيخ محمود خليل الحصري
+      </div>
+      <a class="k-side-back" href="index.html">← موقع التفسير</a>
+    </div>
+  </aside>
+
+  <div class="k-content">
+    <header class="k-mtop">
+      <div class="k-av" id="kTopAvatar" aria-hidden="true">🦁</div>
+      <div class="k-mtop-name">
+        <b id="kTopName">—</b>
+        <small><span id="kTopStars">٠</span> ⭐ · <span id="kTopLevel">مبتدئ</span></small>
+      </div>
+      <button class="k-icon-btn" data-go="certs" aria-label="شهاداتي" title="شهاداتي">📜</button>
+      <button class="k-icon-btn" id="kThemeTop" aria-label="الوضع الليلي" title="الوضع الليلي">🌙</button>
+      <button class="k-icon-btn" data-go="settings" aria-label="الإعدادات" title="الإعدادات">⚙️</button>
+    </header>
+
+    <main class="k-main" id="kMain" tabindex="-1"></main>
+  </div>
+
+  <nav class="k-tabbar" aria-label="التنقل الرئيسي">
+    <div class="k-tabbar-inner">
+      <button class="k-tab" data-go="home"><i>🏠</i> لوحتي</button>
+      <button class="k-tab" data-go="wird"><i>📅</i> وردي</button>
+      <button class="k-tab" data-go="memorize"><i>📖</i> الحفظ</button>
+      <button class="k-tab" data-go="rewards"><i>🏆</i> جوائزي</button>
+      <button class="k-tab" data-go="certs"><i>📜</i> شهاداتي</button>
+    </div>
+  </nav>
+</div>
+
+<!-- مشغّل التلاوة -->
+<div class="k-player" id="kPlayer" hidden>
+  <button class="k-p-btn" data-p="prev" aria-label="الآية السابقة">⏮</button>
+  <button class="k-p-btn k-p-main" data-p="toggle" aria-label="تشغيل أو إيقاف">▶</button>
+  <button class="k-p-btn" data-p="next" aria-label="الآية التالية">⏭</button>
+  <div class="k-p-info">
+    <b id="kPName">—</b>
+    <small id="kPSub">الشيخ محمود خليل الحصري</small>
+  </div>
+  <button class="k-p-btn" data-p="repeat" id="kPRepeat" aria-label="تكرار الآية" title="تكرار">×١</button>
+  <button class="k-p-btn" data-p="close" aria-label="إغلاق المشغّل">✕</button>
+  <div class="k-p-progress"><i id="kPFill"></i></div>
+</div>
+
+<!-- نافذة عامة -->
+<div class="k-modal" id="kModal" hidden>
+  <div class="k-modal-box" role="dialog" aria-modal="true" aria-labelledby="kModalTitle">
+    <div class="k-modal-head">
+      <b id="kModalTitle">—</b>
+      <button class="k-icon-btn" id="kModalClose" aria-label="إغلاق">✕</button>
+    </div>
+    <div class="k-modal-body" id="kModalBody"></div>
+    <div class="k-modal-foot" id="kModalFoot" hidden></div>
+  </div>
+</div>
+
+<div class="k-toasts" id="kToasts" aria-live="polite" aria-atomic="false"></div>
+<canvas class="k-confetti" id="kConfetti" aria-hidden="true"></canvas>
+
+<audio id="kAudio" preload="none"></audio>
+
+<script src="quran-juz30.js"></script>
+<script src="kids.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
