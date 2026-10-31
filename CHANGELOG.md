@@ -25,6 +25,7 @@
 | 4 | 2026-10-17 | تطبيق جوال PWA: `manifest.webmanifest` + `sw.js` (عمل دون إنترنت) + `pwa.js` (زر التثبيت) + 4 أيقونات + اختصارات التطبيق | [2a374b8](https://github.com/asmaagamal1981-ops/juz-amma/commit/2a374b8) | [نشر #39060718086](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/39060718086) |
 | 5 | 2026-10-28 | تطبيق «رحلة حفظ جزء عمَّ» للأطفال (`kids.html`): حسابات محلية بكلمات مرور PBKDF2، ورد حفظ ومراجعة بتباعد متباعد (SRS)، ٤ أنماط تسميع وتصحيح (ذاتي • ترتيب الكلمات • أكمل الفراغ • تسجيل صوتي)، تلاوة الشيخ الحصري لكل آية + السورة كاملة، نجوم وأوسمة ومستويات و٥ جوائز وشهادات PNG، تصدير/استيراد، وربطه بالرئيسية وPWA v6 | [c74d646](https://github.com/asmaagamal1981-ops/juz-amma/commit/c74d646) | [نشر #40754619005](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/40754619005) |
 | 6 | 2026-10-28 | توثيق رابط التطبيق الجديد في «الروابط الثابتة» و«النسخ المنشورة»، وإضافة صف التغيير بروابط الكوميت والنشر | [fc2b83f](https://github.com/asmaagamal1981-ops/juz-amma/commit/fc2b83f) | [نشر #40755199233](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/40755199233) |
+| 7 | 2026-10-31 | تحويل تطبيق الأطفال إلى حسابات سحابية عبر Supabase: مصادقة بريد/هاتف، جدولا `kids_profiles` و`kids_progress` مع RLS، مزامنة تلقائية وكاش محلي، استعادة وتغيير كلمة المرور، حذف الحساب، ونقل التقدم المحلي القديم + PWA v7 | [ce076b4](https://github.com/asmaagamal1981-ops/juz-amma/commit/ce076b4) | [نشر #41223988382](https://github.com/asmaagamal1981-ops/juz-amma/actions/runs/41223988382) |
 
 ## النسخ المنشورة
 
@@ -35,6 +36,7 @@
 | v3 — مع سجل الروابط | https://github.com/asmaagamal1981-ops/juz-amma/blob/main/CHANGELOG.md | 2026-10-17 |
 | v4 — تطبيق جوال PWA | https://asmaagamal1981-ops.github.io/juz-amma/ | 2026-10-17 |
 | v5 — تطبيق حفظ جزء عمَّ للأطفال | https://asmaagamal1981-ops.github.io/juz-amma/kids.html | 2026-10-28 |
+| v6 — حسابات سحابية ومزامنة عبر Supabase | https://asmaagamal1981-ops.github.io/juz-amma/kids.html | 2026-10-31 |
 
 > **قاعدة المتابعة:** كل تغيير جديد يُضاف صفُّه في جدول «سجل التغييرات» يحمل رابط الـ commit ورابط النشر.
 > رابط الـ commit لنفسه يُكتب في التحديث التالي (لأن رقمه لا يُعرف إلا بعد الدفع)، لذا يُكتب آخر صف دائمًا في التغيير التالي.
