@@ -20,6 +20,12 @@
 </head>
 <body class="kids-page">
 
+<!-- شاشة التحميل الأولية -->
+<div class="k-boot" id="kBoot" role="status" aria-live="polite">
+  <div class="k-boot-logo" aria-hidden="true">۝</div>
+  <p>جارٍ تجهيز رحلتك…</p>
+</div>
+
 <!-- ==================== شاشة الدخول والتسجيل ==================== -->
 <div class="k-auth" id="kAuth" hidden>
   <div class="k-auth-brand">
@@ -108,9 +114,10 @@
         </div>
 
         <button type="submit" class="k-btn k-btn--primary k-btn--wide k-btn--lg" id="kAuthSubmit" style="margin-top:6px">دخول 🚀</button>
+        <button type="button" class="k-auth-link" id="kForgot">نسيت كلمة المرور؟</button>
       </form>
 
-      <p class="k-auth-note">🔒 <b>خصوصية كاملة:</b> تُحفظ بياناتك على جهازك فقط (Local Storage) ولا تُرسل إلى أي خادم.</p>
+      <p class="k-auth-note">☁️ <b>حسابك السحابي:</b> تقدمك محفوظ في حسابك الخاص داخل Supabase، محميًا بسياسات تمنع الآخرين من رؤيته، ومتاح من أي جهاز.</p>
     </div>
   </div>
 </div>
@@ -143,6 +150,7 @@
     <div class="k-side-foot">
       <button class="k-btn k-btn--ghost k-btn--sm" id="kThemeSide">🌙 الوضع الليلي</button>
       <button class="k-btn k-btn--ghost k-btn--sm" id="kLogoutSide">🚪 تسجيل الخروج</button>
+      <div class="k-sync-side" id="kSyncSide" data-state="saved" role="status">☁️ محفوظ سحابيًا</div>
       <div style="font-size:10.5px;color:var(--k-muted);text-align:center;font-weight:700;line-height:1.7">
         تلاوة: الشيخ محمود خليل الحصري
       </div>
@@ -157,6 +165,7 @@
         <b id="kTopName">—</b>
         <small><span id="kTopStars">٠</span> ⭐ · <span id="kTopLevel">مبتدئ</span></small>
       </div>
+      <span class="k-sync" id="kSync" data-state="saved" role="status" title="محفوظ سحابيًا" aria-label="محفوظ سحابيًا">☁️</span>
       <button class="k-icon-btn" data-go="certs" aria-label="شهاداتي" title="شهاداتي">📜</button>
       <button class="k-icon-btn" id="kThemeTop" aria-label="الوضع الليلي" title="الوضع الليلي">🌙</button>
       <button class="k-icon-btn" data-go="settings" aria-label="الإعدادات" title="الإعدادات">⚙️</button>
@@ -207,6 +216,9 @@
 
 <audio id="kAudio" preload="none"></audio>
 
+<!-- مكتبة Supabase (نسخة مثبّتة) ثم إعدادات المشروع العامة ثم منطق التطبيق -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" crossorigin="anonymous"></script>
+<script src="supabase-config.js"></script>
 <script src="quran-juz30.js"></script>
 <script src="kids.js"></script>
 <script src="pwa.js"></script>

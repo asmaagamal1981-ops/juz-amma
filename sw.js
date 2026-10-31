@@ -2,9 +2,12 @@
    Service Worker — تطبيق «تفسير جزء عم — تدبّر وعمل»
    يعمل دون اتصال بالإنترنت بعد أول فتح
    ========================================================= */
-const VERSION = 'juz-amma-v6';
+const VERSION = 'juz-amma-v7';
 const CORE_CACHE = VERSION + '-core';
 const RUNTIME_CACHE = VERSION + '-runtime';
+
+/* مكتبة Supabase من CDN — تُخزَّن ليعمل التطبيق دون اتصال */
+const SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js';
 
 /* ملفات الموقع الأساسية */
 const CORE = [
@@ -18,6 +21,7 @@ const CORE = [
   './exam.js',
   './quiz.js',
   './kids.js',
+  './supabase-config.js',
   './quran-juz30.js',
   './surahs-data.js',
   './pwa.js',
@@ -33,6 +37,10 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CORE_CACHE)
       .then((cache) => cache.addAll(CORE))
+      /* مكتبة CDN اختيارية: فشل تحميلها لا يُفشل تثبيت العامل */
+      .then(() => caches.open(RUNTIME_CACHE)
+        .then((cache) => cache.add(SUPABASE_CDN))
+        .catch(() => {}))
       .then(() => self.skipWaiting())
   );
 });
@@ -85,9 +93,11 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  /* خطوط Google: نخزّنها ليعمل الموقع بشكله كاملًا دون إنترنت */
+  /* خطوط Google ومكتبة Supabase: نخزّنها ليعمل التطبيق دون إنترنت */
   if (url.origin !== self.location.origin) {
-    if (/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
+    const isSupabaseLib = url.href === SUPABASE_CDN ||
+      (url.hostname === 'cdn.jsdelivr.net' && /supabase-js/i.test(url.pathname));
+    if (isSupabaseLib || /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
       event.respondWith(cacheFirst(req, RUNTIME_CACHE));
     }
     return;
@@ -101,6 +111,12 @@ self.addEventListener('fetch', (event) => {
   /* ملف العامل نفسه لا يُقدَّم من الذاكرة أبدًا (وإلا توقف التحديث) */
   if (/sw\.js$/.test(url.pathname)) {
     event.respondWith(fetch(req));
+    return;
+  }
+
+  /* إعداد Supabase: الشبكة أولًا حتى تُطبَّق أي مفاتيح جديدة دون انتظار إصدار */
+  if (/supabase-config\.js$/.test(url.pathname)) {
+    event.respondWith(networkFirst(req));
     return;
   }
 

@@ -26,8 +26,21 @@ jobs:
       - name: Prepare site files
         run: |
           mkdir _site
-          cp index.html quiz.html kids.html styles.css kids.css surahs-data.js app.js quiz.js exam.js kids.js quran-juz30.js pwa.js sw.js manifest.webmanifest .nojekyll _site/
+          cp index.html quiz.html kids.html styles.css kids.css surahs-data.js app.js quiz.js exam.js kids.js quran-juz30.js supabase-config.js pwa.js sw.js manifest.webmanifest .nojekyll _site/
           cp -r icons _site/icons
+      # اختياري وآمن: حقن مفتاح anon العام من أسرار المستودع بدل كتابته في الملف
+      # أضف SUPABASE_URL و SUPABASE_ANON_KEY في Settings → Secrets and variables → Actions
+      - name: Inject Supabase public config
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            printf "window.KIDS_SUPABASE = { url: '%s', anonKey: '%s' };\n" "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > _site/supabase-config.js
+            echo "Supabase config injected from repository secrets."
+          else
+            echo "No Supabase secrets found; using the committed supabase-config.js."
+          fi
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact

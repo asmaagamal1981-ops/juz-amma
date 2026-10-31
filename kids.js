@@ -1,7 +1,8 @@
 'use strict';
 /* ============================================================
    رحلة حفظ جزء عمَّ — تطبيق الأطفال
-   كل البيانات محلية (localStorage) ولكل مستخدم مساحته الخاصة.
+   الحسابات والتقدم في Supabase (Auth + Postgres + RLS)،
+   مع نسخة مؤقتة على الجهاز للعمل دون اتصال والمزامنة لاحقًا.
    ============================================================ */
 (function () {
 
@@ -52,12 +53,13 @@ const portionKey = (s, from, to) => s + ':' + from + '-' + to;
 const pLabel = (s, from, to) => 'سورة ' + surahName(s) + ' · الآيات ' + ar(from) + '–' + ar(to);
 const mmss = (sec) => ar(Math.floor(sec / 60)) + ':' + ar(String(sec % 60).padStart(2, '0'));
 
-/* ------------------------- 1) التخزين ------------------------- */
+/* ------------------------- 1) التخزين السحابي ------------------------- */
 const K = {
-  users: 'jz_users_v1',
-  session: 'jz_session_v1',
-  data: (id) => 'jz_data_v1_' + id,
-  theme: 'juz_theme'
+  theme: 'juz_theme',
+  legacyUsers: 'jz_users_v1',
+  legacySession: 'jz_session_v1',
+  legacyData: (id) => 'jz_data_v1_' + id,
+  migrated: (id) => 'jz_migrated_v1_' + id
 };
 
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -69,46 +71,228 @@ function readJSON(k, fb) {
   if (!raw) return fb;
   try { return JSON.parse(raw); } catch (e) { return fb; }
 }
-function writeJSON(k, v) {
-  try { localStorage.setItem(k, JSON.stringify(v)); return true; }
-  catch (e) { toast('تعذّر حفظ البيانات على هذا الجهاز (المساحة ممتلئة؟)', 'err', 4200); return false; }
+
+/* إعدادات المشروع العامة (supabase-config.js) */
+const SB_CFG = window.KIDS_SUPABASE || {};
+const SB_URL = String(SB_CFG.url || '').trim().replace(/\/+$/, '');
+const SB_KEY = String(SB_CFG.anonKey || '').trim();
+const SB_READY = !!(
+  window.supabase && typeof window.supabase.createClient === 'function' &&
+  /^https?:\/\/[^\s/]+$/i.test(SB_URL) &&
+  SB_KEY.length >= 20 &&
+  !/YOUR-|YOUR_/i.test(SB_URL + ' ' + SB_KEY)
+);
+const sb = SB_READY ? window.supabase.createClient(SB_URL, SB_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+  global: { headers: { 'x-application-name': 'juz-amma-kids' } }
+}) : null;
+
+/* ذاكرة محلية مؤقتة (ليست مصدر الحقيقة): للقراءة دون اتصال وطابور المزامنة */
+const CACHE_PREFIX = 'jz_cloud_v1_';
+function cacheRead(id) {
+  if (!id) return null;
+  try {
+    const raw = lsGet(CACHE_PREFIX + id);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return obj && obj.data ? obj : null;
+  } catch (e) { return null; }
+}
+function cacheWrite(profile, data, dirty) {
+  if (!profile || !profile.id) return;
+  try {
+    localStorage.setItem(CACHE_PREFIX + profile.id, JSON.stringify({
+      v: 1, profile: profile, data: data, dirty: !!dirty, at: Date.now()
+    }));
+  } catch (e) { /* المساحة ممتلئة — السحابة تبقى مصدر الحقيقة */ }
+}
+function cacheDrop(id) {
+  if (!id) return;
+  try { localStorage.removeItem(CACHE_PREFIX + id); } catch (e) {}
 }
 
-const getUsers = () => readJSON(K.users, []);
-const saveUsers = (list) => writeJSON(K.users, list);
-const loadData = (id) => readJSON(K.data(id), null);
+/* طابور حفظ مؤجَّل: تغيير واحد كل ٦٥٠ مللي، ثم إعادة محاولة تلقائية */
+const save = { timer: 0, retry: 0, inflight: false, again: false, dirty: false, lastSaved: 0 };
+let syncState = 'saved';
 
-/* ------------------------- 2) كلمات المرور ------------------------- */
-const te = new TextEncoder();
-function bufToB64(buf) {
-  const bytes = new Uint8Array(buf);
-  let s = '';
-  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
-  return btoa(s);
+function renderSync() {
+  const labels = {
+    saving: ['⏳', 'جارٍ الحفظ…'],
+    saved: ['☁️', 'محفوظ سحابيًا'],
+    error: ['⚠️', 'تعذّر الحفظ — إعادة محاولة'],
+    offline: ['📴', 'بانتظار الاتصال']
+  };
+  const l = labels[syncState] || labels.saved;
+  const top = $('#kSync');
+  if (top) {
+    top.textContent = l[0];
+    top.dataset.state = syncState;
+    top.title = l[1];
+    top.setAttribute('aria-label', l[1]);
+  }
+  const side = $('#kSyncSide');
+  if (side) { side.textContent = l[0] + ' ' + l[1]; side.dataset.state = syncState; }
+  const chip = $('#kSyncChip');
+  if (chip) { chip.textContent = l[0] + ' ' + l[1]; chip.dataset.state = syncState; }
 }
-function b64ToBytes(b64) {
-  const s = atob(b64);
-  const out = new Uint8Array(s.length);
-  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
-  return out;
+function setSync(stateName) {
+  syncState = stateName;
+  renderSync();
 }
-async function derivePass(pass, saltB64, iter) {
-  const key = await crypto.subtle.importKey('raw', te.encode(pass), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: b64ToBytes(saltB64), iterations: iter, hash: 'SHA-256' },
-    key, 256
-  );
-  return bufToB64(bits);
+
+function saveD() {
+  if (!USER || !D) return;
+  save.dirty = true;
+  cacheWrite(USER, D, true);
+  if (!sb) return;
+  if (navigator.onLine === false) { setSync('offline'); return; }
+  setSync('saving');
+  clearTimeout(save.timer);
+  save.timer = setTimeout(function () { flushSave(); }, 650);
 }
-async function makePass(pass) {
-  const salt = bufToB64(crypto.getRandomValues(new Uint8Array(16)));
-  const hash = await derivePass(pass, salt, 120000);
-  return { alg: 'PBKDF2-SHA256', iter: 120000, salt: salt, hash: hash };
+
+async function flushSave() {
+  if (!sb || !USER || !D) return;
+  clearTimeout(save.timer);
+  save.timer = 0;
+  if (save.inflight) { save.again = true; return; }
+  if (!save.dirty) { setSync(navigator.onLine === false ? 'offline' : 'saved'); return; }
+  if (navigator.onLine === false) { setSync('offline'); return; }
+
+  const uid = USER.id;
+  save.inflight = true;
+  save.dirty = false;
+  save.again = false;
+  let snapshot;
+  try { snapshot = JSON.parse(JSON.stringify(D)); } catch (e) { snapshot = D; }
+
+  try {
+    const { error } = await sb.from('kids_progress').upsert(
+      { user_id: uid, data: snapshot },
+      { onConflict: 'user_id' }
+    );
+    if (error) throw error;
+    save.lastSaved = Date.now();
+    if (USER && USER.id === uid) {
+      cacheWrite(USER, D, save.dirty);
+      setSync(save.dirty ? 'saving' : 'saved');
+    }
+  } catch (e) {
+    save.dirty = true;
+    setSync(navigator.onLine === false ? 'offline' : 'error');
+    clearTimeout(save.retry);
+    save.retry = setTimeout(function () { flushSave(); }, 5000);
+  } finally {
+    save.inflight = false;
+    if (save.again && save.dirty) {
+      save.again = false;
+      setTimeout(function () { flushSave(); }, 80);
+    }
+  }
 }
-async function checkPass(pass, rec) {
-  if (!rec) return false;
-  const h = await derivePass(pass, rec.salt, rec.iter || 120000);
-  return h === rec.hash;
+
+function bindSync() {
+  renderSync();
+  window.addEventListener('online', function () {
+    if (!USER) return;
+    if (save.dirty) toast('عاد الاتصال — جارٍ مزامنة تقدمك…', 'info', 2600);
+    flushSave();
+  });
+  window.addEventListener('offline', function () {
+    if (USER) setSync('offline');
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && USER) flushSave();
+  });
+  window.addEventListener('pagehide', function () {
+    if (USER) flushSave();
+  });
+}
+
+/* ------------------------- 2) الحساب السحابي ------------------------- */
+/* بريد داخلي ثابت لأصحاب أرقام الهواتف (Supabase Auth يعتمد البريد) */
+function authEmail(lg) {
+  if (!lg) return '';
+  if (lg.type === 'email') return lg.value;
+  return 'p' + String(lg.value || '').replace(/^\+/, '') + '@phone.juz-amma.app';
+}
+
+function mapAuthError(e) {
+  const msg = String((e && (e.message || e.error_description || e.error)) || '');
+  if (/invalid login credentials/i.test(msg)) return 'البريد/الهاتف أو كلمة المرور غير صحيحة';
+  if (/email not confirmed/i.test(msg)) return 'هذا البريد لم يُؤكَّد بعد. راجع بريدك أو اطلب تعطيل تأكيد البريد من المشرف.';
+  if (/user already registered|already been registered|already exists/i.test(msg)) return 'هذا الحساب مسجّل بالفعل، جرّب تسجيل الدخول';
+  if (/password.*(6|six|least)|weak password/i.test(msg)) return 'كلمة المرور ضعيفة، استخدم ٦ أحرف على الأقل';
+  if (/rate limit|too many requests|email rate limit/i.test(msg)) return 'محاولات كثيرة، انتظر قليلًا ثم أعد المحاولة';
+  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(msg)) return 'تعذّر الاتصال بالخادم. تحقق من الإنترنت ثم أعد المحاولة.';
+  if (/signups? (is )?disabled|signup not allowed/i.test(msg)) return 'التسجيل معطّل حاليًا في إعدادات المشروع.';
+  if (/not_authenticated/i.test(msg)) return 'انتهت جلستك، سجّل الدخول من جديد.';
+  if (/relation .* does not exist|could not find the table|schema cache/i.test(msg)) return 'جداول قاعدة البيانات غير جاهزة. نفّذ ملف supabase/schema.sql أولًا.';
+  if (/row-level security|violates row-level/i.test(msg)) return 'تعذّر الوصول لبياناتك بسبب سياسات الحماية. راجع إعدادات RLS.';
+  return msg ? ('تعذّر إتمام العملية: ' + msg) : 'تعذّر إتمام العملية. تحقق من الاتصال ثم أعد المحاولة.';
+}
+
+function isNetworkError(e) {
+  const msg = String((e && (e.message || e.error_description)) || '');
+  return /failed to fetch|networkerror|load failed|fetch failed|timeout/i.test(msg);
+}
+
+async function ensureProfile(user) {
+  const { data, error } = await sb.from('kids_profiles').select('*').eq('id', user.id).maybeSingle();
+  if (error) throw error;
+  if (data) return data;
+
+  const m = user.user_metadata || {};
+  const login = String(m.login || user.email || '').trim();
+  let name = String(m.name || (user.email ? user.email.split('@')[0] : 'حافظ صغير')).trim().slice(0, 30);
+  if (name.length < 2) name = 'حافظ صغير';
+  const rec = {
+    id: user.id,
+    login: login,
+    login_type: m.login_type === 'phone' || m.login_type === 'email'
+      ? m.login_type
+      : (login.indexOf('@') > -1 ? 'email' : 'phone'),
+    name: name,
+    avatar: m.avatar || '🦁',
+    wird: clamp(+m.wird || 3, 2, 8)
+  };
+  const { data: created, error: e2 } = await sb.from('kids_profiles').upsert(rec).select().single();
+  if (e2) throw e2;
+  return created;
+}
+
+async function resumeSession(user) {
+  try {
+    const profile = await ensureProfile(user);
+    await enterApp(profile);
+    return true;
+  } catch (e) {
+    const cached = cacheRead(user.id);
+    if (cached && cached.profile && cached.data && (navigator.onLine === false || isNetworkError(e))) {
+      try { await enterApp(cached.profile); return true; } catch (e2) { /* ignore */ }
+    }
+    console.warn('[kids] تعذّر استئناف الجلسة:', e);
+    return false;
+  }
+}
+
+function resetUi() {
+  stopAudio();
+  clearTimeout(save.timer);
+  clearTimeout(save.retry);
+  save.timer = 0;
+  save.retry = 0;
+  save.again = false;
+  save.dirty = false;
+  USER = null;
+  D = null;
+  state.mem = null;
+  state.test = null;
+  state.testIntro = null;
+  state.cert = null;
+  state.shown = new Set();
+  if (state.modalOpen) closeModal();
+  document.body.style.overflow = '';
 }
 
 /* ------------------------- 3) التحقق من المدخلات ------------------------- */
@@ -178,7 +362,7 @@ function normalizeData() {
   D.settings.wird = clamp(+D.settings.wird || 3, 2, 8);
   D.stars = Math.max(0, +D.stars || 0);
 }
-function saveD() { if (USER && D) writeJSON(K.data(USER.id), D); }
+/* الحفظ يمر عبر طابور Supabase + نسخة محلية مؤقتة (انظر القسم ١) */
 function dayRec(key) {
   const k = key || todayKey();
   if (!D.days[k]) D.days[k] = { learned: 0, tests: 0, stars: 0 };
@@ -352,6 +536,8 @@ function toast(msg, type, ms) {
   }, ms || 2600);
 }
 
+/* روابط استعادة كلمة المرور تصل بوسم type=recovery في العنوان */
+let pendingRecovery = /(?:^|[#&?])type=recovery(?:&|$)/.test(location.hash + location.search);
 let AC = null;
 function sfx(name) {
   if (!D || !D.settings || !D.settings.sound) return;
@@ -596,6 +782,7 @@ function renderChrome() {
   const dark = document.body.classList.contains('dark');
   if (sideTheme) sideTheme.textContent = dark ? '☀️ الوضع النهاري' : '🌙 الوضع الليلي';
   if (topTheme) topTheme.textContent = dark ? '☀️' : '🌙';
+  renderSync();
 }
 function syncNav() {
   const active = state.route === 'test' ? 'memorize' : state.route;
@@ -635,6 +822,7 @@ function renderView() {
     default: html = viewHome();
   }
   main.innerHTML = html;
+  if (state.route === 'settings') renderSync();
   if (state.route === 'memorize') requestAnimationFrame(updatePlayingHighlight);
 }
 
@@ -1749,6 +1937,18 @@ function viewSettings() {
       '<span class="k-chip">' + lv.cur.ico + ' ' + lv.cur.name + '</span>' +
     '</div>' +
     '<div class="k-set-row">' +
+      '<div class="k-set-txt"><b>نوع الحساب</b><small>محفوظ في السحابة ومتاح من أي جهاز</small></div>' +
+      '<span class="k-chip k-chip--mint">☁️ ' + (USER.loginType === 'phone' ? 'هاتف' : 'بريد') + '</span>' +
+    '</div>' +
+    '<div class="k-set-row">' +
+      '<div class="k-set-txt"><b>حالة المزامنة</b><small>تقدمك يُحفظ تلقائيًا في حسابك</small></div>' +
+      '<span class="k-chip" id="kSyncChip">☁️ محفوظ سحابيًا</span>' +
+    '</div>' +
+    '<div class="k-set-row">' +
+      '<div class="k-set-txt"><b>كلمة المرور</b><small>غيّرها متى شئت</small></div>' +
+      '<button class="k-btn k-btn--soft k-btn--sm" data-act="change-pass">🔑 تغيير</button>' +
+    '</div>' +
+    '<div class="k-set-row">' +
       '<div class="k-set-txt"><b>تغيير الاسم</b><small>يظهر على الشهادات</small></div>' +
       '<input class="k-input" id="kSetName" value="' + esc(USER.name) + '" maxlength="30" style="max-width:210px;padding:9px 12px" aria-label="الاسم">' +
       '<button class="k-btn k-btn--primary k-btn--sm" data-act="save-name">حفظ</button>' +
@@ -1791,7 +1991,7 @@ function viewSettings() {
       '<button class="k-btn k-btn--coral k-btn--sm" data-act="reset-progress">♻️ إعادة تعيين</button>' +
     '</div>' +
     '<div class="k-set-row">' +
-      '<div class="k-set-txt"><b>حذف الحساب</b><small>يحذف كل بياناتك من هذا الجهاز نهائيًا</small></div>' +
+      '<div class="k-set-txt"><b>حذف الحساب</b><small>يحذف حسابك وكل بياناتك من السحابة نهائيًا</small></div>' +
       '<button class="k-btn k-btn--coral k-btn--sm" data-act="delete-account">🗑️ حذف</button>' +
     '</div>' +
   '</div>' +
@@ -1799,8 +1999,9 @@ function viewSettings() {
   '<div class="k-card" style="margin-top:16px">' +
     '<b style="font-size:14px">🔒 خصوصيتك</b>' +
     '<p class="k-muted" style="font-size:12.5px;line-height:1.9;margin:6px 0 0">' +
-      'كل بياناتك (الاسم والتقدم) تُحفظ على جهازك فقط. كلمة المرور محفوظة مشفّرة (PBKDF2) ولا يعرفها أحد. ' +
-      'لا يوجد خادم ولا حساب سحابي. إن حذفت بيانات المتصفح ستفقد تقدمك، لذا صدّر نسخة احتياطية من وقت لآخر.' +
+      'اسمك وتقدمك محفوظان في حسابك السحابي الخاص داخل Supabase، ومحميان بسياسات أمان تمنع أي طفل آخر من رؤيتهما. ' +
+      'كلمة المرور تديرها خدمة المصادقة ولا يراها أحد. تبقى نسخة مؤقتة على هذا الجهاز للعمل دون اتصال، وتُزامن تلقائيًا عند عودته. ' +
+      'استخدم زر التصدير للاحتفاظ بنسخة إضافية، ويمكنك حذف الحساب وكل بياناته نهائيًا في أي وقت.' +
     '</p>' +
     '<div class="k-badge-strip" style="margin-top:12px">' +
       '<span class="k-badge-mini"><i>📖</i>' + ar(st.ayahs) + ' آية</span>' +
@@ -1872,6 +2073,7 @@ function confirmModal(title, text, okLabel, cb) {
 }
 
 function showOnboarding() {
+  if (!USER || !D) return;
   const w = D.settings.wird;
   showModal('مرحبًا ' + USER.name + ' 🎉',
     '<p style="font-size:14px;line-height:1.9;margin:0 0 12px">أهلاً بك في رحلة حفظ جزء عمَّ! اختر مقدار الورد اليومي، ويمكنك تغييره لاحقًا.</p>' +
@@ -1894,6 +2096,13 @@ function clearAuthErrors() {
     const el = $('#' + id);
     if (el) el.textContent = '';
   });
+}
+function clearAuthFields() {
+  ['kName', 'kLogin', 'kPass', 'kPass2'].forEach(function (id) {
+    const el = $('#' + id);
+    if (el) el.value = '';
+  });
+  clearAuthErrors();
 }
 function setBusy(btn, busy, label) {
   if (!btn) return;
@@ -1923,6 +2132,8 @@ function setAuthMode(mode) {
   }
   const pass = $('#kPass');
   if (pass) pass.setAttribute('autocomplete', mode === 'signup' ? 'new-password' : 'current-password');
+  const forgot = $('#kForgot');
+  if (forgot) forgot.hidden = mode !== 'login';
   clearAuthErrors();
 }
 function buildAvatars() {
@@ -1933,15 +2144,32 @@ function buildAvatars() {
       '" data-act="pick-avatar" data-avatar="' + a + '" aria-label="صورة ' + a + '">' + a + '</button>';
   }).join('');
 }
+function hideBoot() {
+  const b = $('#kBoot');
+  if (b) b.hidden = true;
+}
 function showAuth() {
   const a = $('#kAuth'), app = $('#kApp');
+  hideBoot();
   if (app) app.hidden = true;
   if (a) a.hidden = false;
   stopAudio();
   document.body.style.overflow = '';
 }
+function showConfigWarning() {
+  const card = $('.k-auth-card');
+  if (!card || $('#kCfgWarn')) return;
+  const div = document.createElement('div');
+  div.id = 'kCfgWarn';
+  div.className = 'k-cfg-warn';
+  div.innerHTML = '<b>☁️ إعداد السحابة مطلوب</b>' +
+    '<p>لم تُضبط مفاتيح Supabase بعد، أو تعذّر تحميل مكتبتها من الشبكة. املأ <code>supabase-config.js</code> ثم أعد تحميل الصفحة، ونفّذ <code>supabase/schema.sql</code> في لوحة Supabase.</p>';
+  card.insertBefore(div, card.querySelector('#kAuthForm'));
+}
+
 async function doSignup() {
   clearAuthErrors();
+  if (!SB_READY) { toast('إعداد Supabase غير مكتمل — راجع supabase-config.js', 'err', 6000); return; }
   const name = ($('#kName') ? $('#kName').value : '').trim();
   const loginRaw = $('#kLogin') ? $('#kLogin').value : '';
   const pass = $('#kPass') ? $('#kPass').value : '';
@@ -1956,83 +2184,156 @@ async function doSignup() {
   if (pass.length < 6) { $('#kPassErr').textContent = 'كلمة المرور ٦ أحرف على الأقل'; bad = true; }
   if (pass2 !== pass) { $('#kPass2Err').textContent = 'كلمتا المرور غير متطابقتين'; bad = true; }
   if (bad) return;
-  if (!window.crypto || !crypto.subtle) {
-    toast('افتح الموقع عبر HTTPS (أو localhost) لإنشاء الحساب', 'err', 5200);
-    return;
-  }
-  const users = getUsers();
-  if (users.some(function (u) { return u.login === lg.value; })) {
-    $('#kLoginErr').textContent = 'هذا الحساب مسجّل بالفعل، جرّب تسجيل الدخول';
-    return;
-  }
+
   const btn = $('#kAuthSubmit');
   setBusy(btn, true, 'جارٍ إنشاء الحساب…');
   try {
-    const passRec = await makePass(pass);
-    const user = {
-      id: uid(),
-      name: name,
+    const email = authEmail(lg);
+    const { data, error } = await sb.auth.signUp({
+      email: email,
+      password: pass,
+      options: {
+        data: {
+          name: name,
+          avatar: pickedAvatar,
+          login: lg.value,
+          login_type: lg.type,
+          wird: pickedWird
+        }
+      }
+    });
+    if (error) throw error;
+
+    const user = data && data.user;
+    if (!user) throw new Error('لم يصل رد صالح من خادم الحسابات');
+
+    if (!data.session) {
+      const ids = user.identities || [];
+      if (!ids.length) {
+        $('#kLoginErr').textContent = 'هذا الحساب مسجّل بالفعل، جرّب تسجيل الدخول';
+      } else {
+        $('#kFormErr').textContent = 'تم إنشاء الحساب، لكن يلزم تأكيد البريد قبل الدخول. اطلب من المشرف تعطيل «Confirm email».';
+      }
+      return;
+    }
+
+    const profile = {
+      id: user.id,
       login: lg.value,
-      loginType: lg.type,
-      pass: passRec,
+      login_type: lg.type,
+      name: name,
       avatar: pickedAvatar,
-      wird: pickedWird,
-      createdAt: todayKey()
+      wird: pickedWird
     };
-    users.push(user);
-    saveUsers(users);
-    const data = defaultData();
-    data.settings.wird = pickedWird;
-    writeJSON(K.data(user.id), data);
-    lsSet(K.session, user.id);
-    enterApp(user);
-    go('home');
-    toast('مرحبًا ' + name + '! حسابك جاهز 🎉', 'ok', 3400);
+    const { error: pErr } = await sb.from('kids_profiles').insert(profile);
+    if (pErr) {
+      /* لا نترك حساب مصادقة بلا ملف شخصي */
+      try { await sb.rpc('kids_delete_account'); } catch (e) { /* ignore */ }
+      try { await sb.auth.signOut(); } catch (e) { /* ignore */ }
+      if (pErr.code === '23505') {
+        $('#kLoginErr').textContent = 'هذا الحساب مسجّل بالفعل، جرّب تسجيل الدخول';
+        return;
+      }
+      throw pErr;
+    }
+
+    const fresh = defaultData();
+    fresh.settings.wird = pickedWird;
+    const { error: dErr } = await sb.from('kids_progress').insert({ user_id: user.id, data: fresh });
+    if (dErr) throw dErr;
+
+    cacheWrite(profile, fresh, false);
+    await enterApp(profile);
+    toast('مرحبًا ' + name + '! حسابك السحابي جاهز 🎉', 'ok', 3600);
     confetti(100);
     sfx('win');
   } catch (e) {
-    toast('تعذّر إنشاء الحساب: ' + (e && e.message ? e.message : 'خطأ غير معروف'), 'err', 5200);
+    const msg = mapAuthError(e);
+    $('#kFormErr').textContent = msg;
+    toast(msg, 'err', 5600);
   } finally {
     setBusy(btn, false);
   }
 }
+
 async function doLogin() {
   clearAuthErrors();
+  if (!SB_READY) { toast('إعداد Supabase غير مكتمل — راجع supabase-config.js', 'err', 6000); return; }
   const lg = normLogin($('#kLogin') ? $('#kLogin').value : '');
   const pass = $('#kPass') ? $('#kPass').value : '';
   if (!lg.value) { $('#kLoginErr').textContent = 'أدخل البريد أو رقم الهاتف'; return; }
   if (!pass) { $('#kPassErr').textContent = 'أدخل كلمة المرور'; return; }
-  if (!window.crypto || !crypto.subtle) {
-    toast('افتح الموقع عبر HTTPS (أو localhost) لتسجيل الدخول', 'err', 5200);
-    return;
-  }
-  const user = getUsers().find(function (u) { return u.login === lg.value; });
-  if (!user) { $('#kLoginErr').textContent = 'لا يوجد حساب بهذه البيانات. أنشئ حسابًا جديدًا.'; return; }
+
   const btn = $('#kAuthSubmit');
   setBusy(btn, true, 'جارٍ الدخول…');
   try {
-    const ok = await checkPass(pass, user.pass);
-    if (!ok) { $('#kPassErr').textContent = 'كلمة المرور غير صحيحة'; return; }
-    lsSet(K.session, user.id);
-    enterApp(user);
-    go('home');
-    toast('أهلًا بعودتك يا ' + user.name + ' 👋', 'ok');
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: authEmail(lg),
+      password: pass
+    });
+    if (error) throw error;
+    if (!data || !data.user) throw new Error('لم يصل رد صالح من خادم الحسابات');
+    const profile = await ensureProfile(data.user);
+    await enterApp(profile);
+    toast('أهلًا بعودتك يا ' + (profile.name || '') + ' 👋', 'ok');
   } catch (e) {
-    toast('تعذّر تسجيل الدخول', 'err');
+    const msg = mapAuthError(e);
+    $('#kLoginErr').textContent = msg;
+    toast(msg, 'err', 5600);
   } finally {
     setBusy(btn, false);
   }
 }
-function enterApp(u) {
-  USER = u;
-  D = loadData(u.id);
-  if (!D) {
-    D = defaultData();
-    D.settings.wird = clamp(+u.wird || 3, 2, 8);
-    writeJSON(K.data(u.id), D);
+
+async function enterApp(profile) {
+  if (!profile || !profile.id) throw new Error('ملف الحساب غير موجود');
+  USER = {
+    id: profile.id,
+    name: profile.name,
+    login: profile.login,
+    loginType: profile.login_type || profile.loginType || 'email',
+    avatar: profile.avatar || '🦁',
+    wird: clamp(+profile.wird || 3, 2, 8)
+  };
+
+  const cached = cacheRead(USER.id);
+  let cloud = null;
+  let loadError = null;
+  try {
+    const { data, error } = await sb.from('kids_progress').select('data').eq('user_id', USER.id).maybeSingle();
+    if (error) throw error;
+    cloud = data && data.data ? data.data : null;
+  } catch (e) {
+    loadError = e;
   }
+
+  if (loadError) {
+    if (cached && cached.data) {
+      D = cached.data;
+      save.dirty = !!(cached.dirty);
+      setSync('offline');
+      toast('لا يوجد اتصال — نعرض آخر نسخة محفوظة على هذا الجهاز', 'info', 4600);
+    } else {
+      USER = null;
+      throw loadError;
+    }
+  } else {
+    const cachedDirty = !!(cached && cached.dirty && cached.data);
+    D = cachedDirty ? cached.data : (cloud || (cached && cached.data) || null);
+    if (!D) {
+      D = defaultData();
+      D.settings.wird = USER.wird;
+      save.dirty = true;
+    } else {
+      save.dirty = cachedDirty;
+    }
+  }
+
   normalizeData();
-  lsSet(K.session, u.id);
+  D.settings.wird = clamp(+D.settings.wird || USER.wird, 2, 8);
+  cacheWrite(USER, D, save.dirty);
+
+  hideBoot();
   $('#kAuth').hidden = true;
   $('#kApp').hidden = false;
   state.mem = null;
@@ -2044,26 +2345,138 @@ function enterApp(u) {
   const hash = (location.hash || '').replace('#', '');
   const route = ROUTES.indexOf(hash) > -1 ? hash : 'home';
   go(route, null, true);
-  if (!D.onboarded) setTimeout(showOnboarding, 700);
+  setSync(navigator.onLine === false ? 'offline' : (save.dirty ? 'saving' : 'saved'));
+  if (save.dirty) saveD();
+
+  if (pendingRecovery) {
+    pendingRecovery = false;
+    setTimeout(function () { if (USER) passwordModal(false); }, 500);
+  } else if (!D.onboarded) {
+    setTimeout(showOnboarding, 700);
+  } else {
+    maybeOfferLegacyImport();
+  }
 }
+
 function logout() {
-  confirmModal('تسجيل الخروج', 'هل تريد الخروج من حسابك؟ بياناتك ستبقى محفوظة على هذا الجهاز.', 'خروج', function () {
-    lsDel(K.session);
-    stopAudio();
-    USER = null;
-    D = null;
-    state.mem = null;
-    state.test = null;
-    state.testIntro = null;
-    state.cert = null;
-    state.shown = new Set();
-    showAuth();
-    setAuthMode('login');
-    const l = $('#kLogin'), p = $('#kPass');
-    if (l) l.value = '';
-    if (p) p.value = '';
-    toast('تم تسجيل الخروج بنجاح', 'ok');
+  confirmModal('تسجيل الخروج', 'هل تريد الخروج من حسابك؟ تقدمك محفوظ في حسابك السحابي.', 'خروج', function () {
+    (async function () {
+      try { await flushSave(); } catch (e) { /* ignore */ }
+      try { await sb.auth.signOut(); } catch (e) { /* ignore */ }
+      resetUi();
+      showAuth();
+      setAuthMode('login');
+      clearAuthFields();
+      toast('تم تسجيل الخروج بنجاح', 'ok');
+    })();
   });
+}
+
+async function doForgot() {
+  if (!SB_READY) { toast('إعداد Supabase غير مكتمل', 'err'); return; }
+  const lg = normLogin($('#kLogin') ? $('#kLogin').value : '');
+  if (lg.type !== 'email' || !isEmail(lg.value)) {
+    toast('استعادة كلمة المرور متاحة لحسابات البريد. لحساب الهاتف: ادخل بكلمة المرور الحالية وغيّرها من الإعدادات.', 'info', 6200);
+    return;
+  }
+  const btn = $('#kForgot');
+  setBusy(btn, true, 'جارٍ الإرسال…');
+  try {
+    const redirectTo = location.origin + location.pathname;
+    const { error } = await sb.auth.resetPasswordForEmail(lg.value, { redirectTo: redirectTo });
+    if (error) throw error;
+    toast('أرسلنا رابط استعادة كلمة المرور إلى بريدك ✅', 'ok', 5400);
+  } catch (e) {
+    toast(mapAuthError(e), 'err', 5400);
+  } finally {
+    setBusy(btn, false);
+  }
+}
+
+function passwordModal(withCurrent) {
+  const field = function (id, label, ph, ac) {
+    return '<div class="k-field"><label for="' + id + '">' + label + '</label>' +
+      '<div class="k-input-wrap"><span class="k-in-ico" aria-hidden="true">🔒</span>' +
+      '<input id="' + id + '" class="k-input" type="password" placeholder="' + ph + '" autocomplete="' + ac + '"></div></div>';
+  };
+  showModal(withCurrent ? '🔑 تغيير كلمة المرور' : '🔑 كلمة مرور جديدة',
+    (withCurrent ? field('kCurPass', 'كلمة المرور الحالية', 'اكتبها للتأكيد', 'current-password') : '') +
+    field('kNewPass', 'كلمة المرور الجديدة', '٦ أحرف على الأقل', 'new-password') +
+    field('kNewPass2', 'تأكيد كلمة المرور الجديدة', 'أعد كتابتها', 'new-password') +
+    '<span class="k-err" id="kPassChangeErr" style="display:block;margin-top:6px"></span>',
+    '<button class="k-btn k-btn--primary" data-act="save-password" data-current="' + (withCurrent ? '1' : '0') + '">حفظ كلمة المرور</button>' +
+    '<button class="k-btn k-btn--ghost" data-act="close-modal">إلغاء</button>');
+}
+
+async function doSavePassword(btn) {
+  if (!USER) return;
+  const withCurrent = btn && btn.dataset.current === '1';
+  const cur = withCurrent && $('#kCurPass') ? $('#kCurPass').value : '';
+  const p1 = $('#kNewPass') ? $('#kNewPass').value : '';
+  const p2 = $('#kNewPass2') ? $('#kNewPass2').value : '';
+  const errEl = $('#kPassChangeErr');
+  const fail = function (msg) { if (errEl) errEl.textContent = msg; toast(msg, 'err', 4200); };
+  if (p1.length < 6) { fail('كلمة المرور الجديدة ٦ أحرف على الأقل'); return; }
+  if (p1 !== p2) { fail('كلمتا المرور غير متطابقتين'); return; }
+  if (withCurrent && !cur) { fail('أدخل كلمة المرور الحالية'); return; }
+
+  setBusy(btn, true, 'جارٍ الحفظ…');
+  try {
+    if (withCurrent) {
+      const { error: vErr } = await sb.auth.signInWithPassword({
+        email: authEmail(normLogin(USER.login)),
+        password: cur
+      });
+      if (vErr) { fail('كلمة المرور الحالية غير صحيحة'); return; }
+    }
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) throw error;
+    closeModal();
+    toast('تم تحديث كلمة المرور ✅', 'ok', 3600);
+  } catch (e) {
+    fail(mapAuthError(e));
+  } finally {
+    setBusy(btn, false);
+  }
+}
+
+function legacyCandidate() {
+  const users = readJSON(K.legacyUsers, []);
+  if (!Array.isArray(users) || !users.length) return null;
+  let best = null;
+  let bestScore = 0;
+  users.forEach(function (u) {
+    const d = readJSON(K.legacyData(u.id), null);
+    if (!d || !Array.isArray(d.portions)) return;
+    const score = d.portions.length * 20 + (d.tests || []).length * 2 + (+d.stars || 0);
+    if (score > bestScore) { bestScore = score; best = { user: u, data: d }; }
+  });
+  return best;
+}
+
+function maybeOfferLegacyImport() {
+  if (!USER || !D || lsGet(K.migrated(USER.id))) return;
+  if (D.portions.length || D.tests.length) return;
+  const best = legacyCandidate();
+  if (!best) return;
+  setTimeout(function () {
+    if (!USER || D.portions.length || D.tests.length) return;
+    /* نعرض العرض مرة واحدة لكل حساب، حتى لو أُغلق لاحقًا */
+    lsSet(K.migrated(USER.id), '1');
+    confirmModal('تقدمك القديم',
+      'وجدنا تقدمًا محفوظًا على هذا المتصفح من النسخة السابقة' +
+      (best.user && best.user.name ? ' لـ «' + esc(best.user.name) + '»' : '') +
+      '. هل تريد نقله إلى حسابك السحابي؟',
+      'نعم، انقل تقدمي', function () {
+        const keep = Object.assign({}, D.settings);
+        D = Object.assign(defaultData(), best.data);
+        D.settings = Object.assign({ wird: 3, sound: true }, keep, best.data.settings || {});
+        normalizeData();
+        saveD();
+        go('home');
+        toast('تم نقل تقدمك القديم بنجاح 🎉', 'ok', 3800);
+      });
+  }, 1600);
 }
 
 /* ------------------------- 23) المظهر والبيانات ------------------------- */
@@ -2112,29 +2525,55 @@ function importFile(file) {
   };
   reader.readAsText(file);
 }
-function saveName() {
+async function saveName() {
+  if (!USER) return;
   const inp = $('#kSetName');
   const name = ((inp && inp.value) || '').trim();
   if (name.length < 2 || name.length > 30) { toast('الاسم يجب أن يكون بين حرفين و٣٠ حرفًا', 'err'); return; }
+  let error = null;
+  try {
+    const res = await sb.from('kids_profiles').update({ name: name }).eq('id', USER.id);
+    error = res.error;
+  } catch (e) { error = e; }
+  if (error) { toast(mapAuthError(error), 'err', 4600); return; }
   USER.name = name;
-  saveUsers(getUsers().map(function (u) { return u.id === USER.id ? Object.assign({}, u, { name: name }) : u; }));
+  cacheWrite(USER, D, save.dirty);
   renderChrome();
   renderView();
   toast('تم تحديث الاسم', 'ok');
 }
-function setAvatar(avatar) {
-  if (!avatar) return;
+async function setAvatar(avatar) {
+  if (!avatar || !USER) return;
+  const prev = USER.avatar;
   USER.avatar = avatar;
-  saveUsers(getUsers().map(function (u) { return u.id === USER.id ? Object.assign({}, u, { avatar: avatar }) : u; }));
   renderChrome();
   renderView();
+  let error = null;
+  try {
+    const res = await sb.from('kids_profiles').update({ avatar: avatar }).eq('id', USER.id);
+    error = res.error;
+  } catch (e) { error = e; }
+  if (error) {
+    USER.avatar = prev;
+    renderChrome();
+    renderView();
+    toast(mapAuthError(error), 'err', 4600);
+    return;
+  }
+  cacheWrite(USER, D, save.dirty);
   sfx('ok');
   toast('تم تغيير الصورة الرمزية', 'ok', 1600);
 }
 function setWird(n) {
+  if (!USER || !D) return;
   D.settings.wird = clamp(+n || 3, 2, 8);
   saveD();
   renderView();
+  if (sb) {
+    sb.from('kids_profiles').update({ wird: D.settings.wird }).eq('id', USER.id)
+      .then(function (res) { if (res.error) toast('تعذّر تحديث الورد في حسابك السحابي', 'err', 4200); })
+      .catch(function () { toast('تعذّر تحديث الورد في حسابك السحابي — سيُزامن تقدمك عند عودة الاتصال', 'info', 4200); });
+  }
   toast('مقدار الورد اليومي: ' + ar(D.settings.wird) + ' آيات', 'ok', 2000);
 }
 
@@ -2234,9 +2673,15 @@ async function handleAct(act, btn) {
       D.settings.wird = clamp(+((sel && sel.dataset.w) || D.settings.wird), 2, 8);
       D.onboarded = true;
       saveD();
+      if (sb && USER) {
+        sb.from('kids_profiles').update({ wird: D.settings.wird }).eq('id', USER.id)
+          .then(function (res) { if (res.error) toast('تعذّر تحديث إعداد الورد في حسابك', 'err'); })
+          .catch(function () { /* يُعتمد الورد من تقدمك عند المزامنة */ });
+      }
       closeModal();
       renderView();
       toast('خطتك جاهزة! هيا نبدأ 🚀', 'ok');
+      maybeOfferLegacyImport();
       break;
     }
     case 'start-new': {
@@ -2389,6 +2834,8 @@ async function handleAct(act, btn) {
     case 'theme': toggleTheme(); break;
     case 'logout': logout(); break;
     case 'save-name': saveName(); break;
+    case 'change-pass': passwordModal(true); break;
+    case 'save-password': doSavePassword(btn); break;
     case 'set-avatar': setAvatar(btn.dataset.avatar); break;
     case 'set-wird': setWird(+btn.dataset.n); break;
     case 'toggle-sound': {
@@ -2420,23 +2867,25 @@ async function handleAct(act, btn) {
     }
     case 'delete-account': {
       confirmModal('حذف الحساب',
-        'سيُحذف حسابك وكل بياناتك نهائيًا من هذا الجهاز. لا يمكن التراجع عن هذا الإجراء.',
+        'سيُحذف حسابك وكل بياناتك نهائيًا من السحابة وهذا الجهاز. لا يمكن التراجع عن هذا الإجراء.',
         'احذف الحساب', function () {
-          const users = getUsers().filter(function (u) { return u.id !== USER.id; });
-          saveUsers(users);
-          lsDel(K.data(USER.id));
-          lsDel(K.session);
-          stopAudio();
-          USER = null;
-          D = null;
-          state.mem = null;
-          state.test = null;
-          state.testIntro = null;
-          state.cert = null;
-          state.shown = new Set();
-          showAuth();
-          setAuthMode('signup');
-          toast('تم حذف الحساب', 'ok');
+          (async function () {
+            const uid = USER ? USER.id : null;
+            try {
+              if (save.dirty) { try { await flushSave(); } catch (e) { /* ignore */ } }
+              const { error } = await sb.rpc('kids_delete_account');
+              if (error) throw error;
+              cacheDrop(uid);
+              try { await sb.auth.signOut(); } catch (e) { /* الحساب حُذف بالفعل */ }
+              resetUi();
+              showAuth();
+              setAuthMode('signup');
+              clearAuthFields();
+              toast('تم حذف الحساب وكل بياناته نهائيًا', 'ok', 3800);
+            } catch (e) {
+              toast(mapAuthError(e), 'err', 5600);
+            }
+          })();
         });
       break;
     }
@@ -2473,6 +2922,8 @@ function bindAuth() {
       eye.setAttribute('aria-label', show ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
     });
   }
+  const forgot = $('#kForgot');
+  if (forgot) forgot.addEventListener('click', doForgot);
   const wirdBox = $('#kWirdPick');
   if (wirdBox) {
     wirdBox.addEventListener('click', function (e) {
@@ -2544,25 +2995,66 @@ function bindGlobal() {
 }
 
 /* ------------------------- 27) التشغيل ------------------------- */
-function boot() {
+async function boot() {
   applyTheme(lsGet(K.theme) === 'dark', false);
   bindAuth();
   bindGlobal();
-  const sid = lsGet(K.session);
-  if (sid) {
-    const u = getUsers().find(function (x) { return x.id === sid; });
-    if (u) { enterApp(u); return; }
-    lsDel(K.session);
+  bindSync();
+
+  if (!SB_READY) {
+    showAuth();
+    showConfigWarning();
+    return;
   }
+
+  try {
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+    const session = data && data.session;
+    if (session && session.user) {
+      const ok = await resumeSession(session.user);
+      if (ok) return;
+    }
+  } catch (e) {
+    console.warn('[kids] تعذّر قراءة الجلسة:', e);
+  }
+
   showAuth();
+}
+
+if (sb) {
+  sb.auth.onAuthStateChange(function (event, session) {
+    /* لا ننتظر داخل المعالج (Supabase يوصي بذلك) */
+    setTimeout(function () {
+      if (event === 'SIGNED_OUT') {
+        if (USER) {
+          resetUi();
+          showAuth();
+          setAuthMode('login');
+          clearAuthFields();
+        }
+      } else if (event === 'PASSWORD_RECOVERY') {
+        pendingRecovery = true;
+        if (USER) {
+          pendingRecovery = false;
+          passwordModal(false);
+        }
+      } else if (event === 'USER_UPDATED' && session && session.user && !USER) {
+        resumeSession(session.user);
+      }
+    }, 0);
+  });
 }
 
 window.__kids = {
   get user() { return USER; },
   get data() { return D; },
+  get client() { return sb; },
+  get sync() { return { state: syncState, pending: save.dirty, lastSaved: save.lastSaved }; },
   go: go,
   stats: stats,
-  plan: planAll
+  plan: planAll,
+  flush: flushSave
 };
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
